@@ -8,7 +8,7 @@
 ### 1. Clonar repositorio
 
 ```bash
-cd ~/dev/personal/proyecto_TIN/Proyecto-TIN
+git clone https://github.com/Rotopikus/Proyecto-TIN.git
 ```
 
 ### 2. Instalar las dependencias del sistema
