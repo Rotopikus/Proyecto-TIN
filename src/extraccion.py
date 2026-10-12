@@ -70,29 +70,55 @@ ruta = f"raw_data/origen_leyes/{ID_FECHA}"                     # 1) definir la r
 origen_leyes.write.mode("overwrite").parquet(ruta)            # 2) escribir el comando de write
 print("guardado en", ruta)
 
-# Extyracción API
+# Extracción API (Dólar y Cobre con manejo de headers y reintentos)
+import time
+from requests.adapters import HTTPAdapter, Retry
 
-resp = requests.get("https://mindicador.cl/api/dolar/2025", timeout=20)
-resp2 = requests.get("https://mindicador.cl/api/dolar/2026", timeout=20)
-print("codigo de respuesta:", resp.status_code)   # 200 = OK
-serie = resp.json()["serie"] + resp2.json()["serie"]
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
 
-dolar = spark.createDataFrame(pd.DataFrame(serie))
-print("filas:", dolar.count())
-dolar.show(5)
+session = requests.Session()
+retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
+session.mount('https://', HTTPAdapter(max_retries=retries))
 
-ruta = f"raw_data/dolar/{ID_FECHA}"                     # 1) definir la ruta
-dolar.coalesce(1).write.mode("overwrite").parquet(ruta)            # 2) escribir el comando de write
-print("guardado en", ruta)
+def descargar_indicador(url, nombre):
+    print(f"Descargando {nombre} desde {url}...")
+    try:
+        resp = session.get(url, headers=headers, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        if "serie" in data:
+            return data["serie"]
+        else:
+            print(f"Aviso: la respuesta de {nombre} no tiene la clave 'serie'.")
+            return []
+    except Exception as e:
+        print(f"Error al descargar {nombre}: {e}")
+        return []
 
+# 1. Dólar 2025 y 2026
+serie_dolar = descargar_indicador("https://mindicador.cl/api/dolar/2025", "dólar 2025") + \
+              descargar_indicador("https://mindicador.cl/api/dolar/2026", "dólar 2026")
 
+if serie_dolar:
+    dolar = spark.createDataFrame(pd.DataFrame(serie_dolar))
+    print("Filas dólar:", dolar.count())
+    ruta_dolar = f"raw_data/dolar/{ID_FECHA}"
+    if Path(ruta_dolar).exists():
+        shutil.rmtree(ruta_dolar)
+    dolar.coalesce(1).write.mode("overwrite").parquet(ruta_dolar)
+    print("Guardado en", ruta_dolar)
 
-for tabla in sorted(os.listdir("raw_data")):
-    print("raw_data/%s -> %s" % (tabla, os.listdir(f"raw_data/{tabla}")))
+# 2. Cobre 2025 y 2026 (por si acaso lo necesitas para cruzar precios)
+serie_cobre = descargar_indicador("https://mindicador.cl/api/libra_cobre/2025", "cobre 2025") + \
+              descargar_indicador("https://mindicador.cl/api/libra_cobre/2026", "cobre 2026")
 
-print()
-dolar_raw = spark.read.parquet(f"raw_data/dolar/{ID_FECHA}")
-print("releido de raw_data/dolar:", dolar_raw.count(), "filas")
-dolar_raw.show(3)
-
-spark.stop()
+if serie_cobre:
+    cobre = spark.createDataFrame(pd.DataFrame(serie_cobre))
+    print("Filas cobre:", cobre.count())
+    ruta_cobre = f"raw_data/libra_cobre/{ID_FECHA}"
+    if Path(ruta_cobre).exists():
+        shutil.rmtree(ruta_cobre)
+    cobre.coalesce(1).write.mode("overwrite").parquet(ruta_cobre)
+    print("Guardado en", ruta_cobre)
