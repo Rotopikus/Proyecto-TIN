@@ -25,21 +25,7 @@ python3 --version
 java -version
 ```
 
-### 3. Crear y activar el entorno virtual
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 4. Instalar las dependencias del proyecto
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-### 5. Preparar los archivos originales
+### 3. Preparar los archivos originales
 
 La estructura de entrada esperada es:
 
@@ -54,17 +40,12 @@ Proyecto-TIN/
 │   └── process.py
 └── requirements.txt
 ```
+Recuerda subir los archivos de datos de minería grupo 3 a la carpeta data_original.
 
-### 6. Ejecutar la extracción
-
-```bash
-python src/extraccion.py
-```
-
-### 7. Ejecutar el procesamiento de datos
+### 4. Ejecutar el código
 
 ```bash
-python src/process.py
+bash run.sh
 ```
 
 

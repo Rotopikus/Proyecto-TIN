@@ -121,4 +121,3 @@ log "Ejecutando procesamiento..."
 
 log "Cadena actual ejecutada sin errores en $((SECONDS - START_SECONDS)) segundos."
 printf 'Archivos de extracción: raw_data/<tabla>/%s/\n' "$RUN_DATE"
-printf '%s\n' 'Nota: process.py todavía no genera una métrica final ni archivos en processed_data/.'
