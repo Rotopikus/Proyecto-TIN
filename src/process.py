@@ -67,9 +67,7 @@ lotes["toneladas_tratadas"] = (
 )
 for col in ["ley_pct", "recuperacion_pct"]:
     lotes[col] = lotes[col].astype(str).str.replace(",", ".").astype(float)
-    # Las columnas numéricas en lotes vienen como string (con comas o puntos)
-    #for col in ["toneladas_tratadas", "ley_pct", "recuperacion_pct"]:
-    #lotes[col] = lotes[col].astype(str).str.replace(",", ".").astype(float)
+    # Las columnas numéricas en lotes vienen como string
 
 # Calcular cobre fino con la ley de Operaciones (Definición Principal)
 lotes["cobre_fino_op_ton"] = (
@@ -86,9 +84,6 @@ if not origen_leyes.empty:
 
     lab_grouped = origen_leyes.groupby("lote_id")["ley_lab_prom"].first().reset_index()
     lab_grouped.rename(columns={"ley_lab_prom": "ley_lab"}, inplace=True)
-    #origen_leyes["ley"] = origen_leyes["ley"].astype(str).str.replace(",", ".").astype(float)
-    #lab_grouped = origen_leyes.groupby("lote_id")["ley"].mean().reset_index()
-    #lab_grouped.rename(columns={"ley": "ley_lab"}, inplace=True)
     
     # Cruzamos con lotes
     lotes = lotes.merge(lab_grouped, on="lote_id", how="left")
@@ -191,8 +186,6 @@ df_final["costo_libra_op"] = df_final["costo_total_usd"] / df_final["libras_fina
 df_final["costo_libra_hib"] = df_final["costo_total_usd"] / df_final["libras_finas_hib"]
 
 # --- 6. RESULTADOS GLOBALES Y DE SENSIBILIDAD ---
-#costo_promedio_op = df_final["costo_libra_op"].mean()
-#costo_promedio_hib = df_final["costo_libra_hib"].mean()
 costo_promedio_op = df_final["costo_total_usd"].sum() / df_final["libras_finas_op"].sum()
 costo_promedio_hib = df_final["costo_total_usd"].sum() / df_final["libras_finas_hib"].sum()
 
