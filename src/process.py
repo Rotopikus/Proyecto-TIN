@@ -56,9 +56,20 @@ dolar["fecha"] = pd.to_datetime(
 import numpy as np
 
 # --- 1. CONVERTIR COLUMNAS NUMÉRICAS EN LOTES ---
-# Las columnas numéricas en lotes vienen como string (con comas o puntos)
-for col in ["toneladas_tratadas", "ley_pct", "recuperacion_pct"]:
+con_coma = lotes["toneladas_tratadas"].astype(str).str.contains(",", regex=False)
+print(f"Lotes excluidos por coma en toneladas: {con_coma.sum()}")
+lotes = lotes[~con_coma].copy()
+lotes["toneladas_tratadas"] = (
+    lotes["toneladas_tratadas"]
+    .astype(str)
+    .str.replace(".", "", regex=False)
+    .astype(float)
+)
+for col in ["ley_pct", "recuperacion_pct"]:
     lotes[col] = lotes[col].astype(str).str.replace(",", ".").astype(float)
+    # Las columnas numéricas en lotes vienen como string (con comas o puntos)
+    #for col in ["toneladas_tratadas", "ley_pct", "recuperacion_pct"]:
+    #lotes[col] = lotes[col].astype(str).str.replace(",", ".").astype(float)
 
 # Calcular cobre fino con la ley de Operaciones (Definición Principal)
 lotes["cobre_fino_op_ton"] = (
@@ -71,9 +82,13 @@ lotes["cobre_fino_op_ton"] = (
 # origen_leyes tiene los resultados de laboratorio por lote_id
 # Agrupamos por lote_id para obtener un promedio de laboratorio si existen múltiples muestras
 if not origen_leyes.empty:
-    origen_leyes["ley"] = origen_leyes["ley"].astype(str).str.replace(",", ".").astype(float)
-    lab_grouped = origen_leyes.groupby("lote_id")["ley"].mean().reset_index()
-    lab_grouped.rename(columns={"ley": "ley_lab"}, inplace=True)
+    origen_leyes["ley_lab_prom"] = pd.to_numeric(origen_leyes["ley_lab_prom"].astype(str).str.replace(",", ".", regex=False), errors="coerce")
+
+    lab_grouped = origen_leyes.groupby("lote_id")["ley_lab_prom"].first().reset_index()
+    lab_grouped.rename(columns={"ley_lab_prom": "ley_lab"}, inplace=True)
+    #origen_leyes["ley"] = origen_leyes["ley"].astype(str).str.replace(",", ".").astype(float)
+    #lab_grouped = origen_leyes.groupby("lote_id")["ley"].mean().reset_index()
+    #lab_grouped.rename(columns={"ley": "ley_lab"}, inplace=True)
     
     # Cruzamos con lotes
     lotes = lotes.merge(lab_grouped, on="lote_id", how="left")
@@ -112,6 +127,7 @@ if hasattr(costos, "toPandas"):
 
 # Eliminar posibles filas de cabecera repetidas por error de lectura
 costos = costos[costos["energia_clp"] != "energia_clp"].copy()
+costos = costos[costos["planta"].astype(str).str.upper().str.strip() != "TOTAL"].copy()
 
 for col in ["energia_clp", "insumos_clp", "mano_obra_clp"]:
     if col in costos.columns:
@@ -128,8 +144,20 @@ costos["mes_str"] = pd.to_datetime(costos["mes"], errors="coerce").dt.to_period(
 costos["costo_total_clp"] = costos["energia_clp"] + costos["insumos_clp"] + costos["mano_obra_clp"]
 
 # Estandarizar nombre de planta en costos para hacer el merge con la tabla plantas
-costos["nombre_planta"] = costos["planta"].astype(str).str.upper().str.strip()
-plantas["nombre_planta_std"] = plantas["nombre"].astype(str).str.upper().str.strip()
+
+nombres_plantas = {
+    "P. CERRO NORTE": "CERRO NORTE",
+    "PLANTA CERRO NORTE": "CERRO NORTE",
+    "P. LOA": "LOA",
+    "PLANTA LOA": "LOA",
+    "P. SALADO": "SALADO",
+    "PLANTA SALADO": "SALADO",
+    "P. ILLAPEL": "ILLAPEL",
+    "PLANTA ILLAPEL": "ILLAPEL",
+
+}
+costos["nombre_planta"] = costos["planta"].astype(str).str.upper().str.strip().replace(nombres_plantas)
+plantas["nombre_planta_std"] = plantas["nombre"].astype(str).str.upper().str.strip().replace(nombres_plantas)
 
 # Cruzar costos con plantas para obtener planta_id
 costos_unificado = costos.merge(
@@ -163,8 +191,12 @@ df_final["costo_libra_op"] = df_final["costo_total_usd"] / df_final["libras_fina
 df_final["costo_libra_hib"] = df_final["costo_total_usd"] / df_final["libras_finas_hib"]
 
 # --- 6. RESULTADOS GLOBALES Y DE SENSIBILIDAD ---
-costo_promedio_op = df_final["costo_libra_op"].mean()
-costo_promedio_hib = df_final["costo_libra_hib"].mean()
+#costo_promedio_op = df_final["costo_libra_op"].mean()
+#costo_promedio_hib = df_final["costo_libra_hib"].mean()
+costo_promedio_op = df_final["costo_total_usd"].sum() / df_final["libras_finas_op"].sum()
+costo_promedio_hib = df_final["costo_total_usd"].sum() / df_final["libras_finas_hib"].sum()
+
+
 dif_abs = abs(costo_promedio_op - costo_promedio_hib)
 dif_porc = (dif_abs / costo_promedio_op) * 100
 
