@@ -1,0 +1,18 @@
+{
+  "comparacion": "enero versus diciembre de 2025, cuatro plantas en ambos meses",
+  "alza_costo_usd_pct": 85.6938773064818,
+  "alza_costo_clp_pct": 69.9960445534429,
+  "alza_precio_cobre_pct": 29.81572481572481,
+  "caida_brecha_pct": -23.745356553055686,
+  "brecha_gasto_diciembre_clp": 49364892378.231964,
+  "escenario_recuperacion_10pct_clp": 4936489237.823196,
+  "cobertura_lab_pct": 6.093968057063111,
+  "exclusion_filas_pct": 11.711958381819427,
+  "puente": {
+    "inicial": 2.0780854600030745,
+    "precio": 1.2134999999999998,
+    "costo_clp_a_tc_enero": -1.3942613888827557,
+    "dolar": -0.31268741307218106,
+    "final": 1.584636658048137
+  }
+}

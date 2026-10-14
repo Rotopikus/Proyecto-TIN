@@ -1,0 +1,152 @@
+{
+  "fecha": "2026-10-14",
+  "grupo_curso": 11,
+  "set_datos": "mineria_cobre/grupo_3",
+  "codigo_base_commit": "bdd6bc4a8caa8929a354a0a3516ed35d0b75f8f4",
+  "archivos": [
+    {
+      "ruta": "README.md",
+      "bytes": 4466,
+      "sha256": "b0eb48591153ab56b2829b1dc9ea09754dccd71e881ddefc2ccf14173d7d55b9",
+      "git_blob_sha1": "f62c014bffa076606bdfcee8e91c602002b55478"
+    },
+    {
+      "ruta": "requirements.txt",
+      "bytes": 64,
+      "sha256": "bf19f4f600a2c8a433db29462e0f1304f0cad22f7fc57e22b5c7139399905718",
+      "git_blob_sha1": "f19ad893910c1e98c4aa9f430bd9f30eb8ba83f8"
+    },
+    {
+      "ruta": "analisis_e.py",
+      "bytes": 9443,
+      "sha256": "a1d44c2daa7ec356a988b1b08a7bcf3d6a05fe3f6df1d15f103763c0f88180a1",
+      "git_blob_sha1": "3ca9f6f060742bd6ba0291ae1d257d73d9cd8844"
+    },
+    {
+      "ruta": "graficos_e.py",
+      "bytes": 5015,
+      "sha256": "02d7e7a35bcc54fa3a67c638553d8b1078937986956eeeeb742102adb8bfafaa",
+      "git_blob_sha1": "3333f25daafadf11f78076436d78f1d420501394"
+    },
+    {
+      "ruta": "descargar_fuentes.py",
+      "bytes": 1476,
+      "sha256": "ad04947ace4cda0d5a5fd870ba4b8b339d87537fcc02f64a1ecfb2244f96aee4",
+      "git_blob_sha1": "c1b8060a908e11e751338b0e5f1469e8a25cca61"
+    },
+    {
+      "ruta": "process_original.py",
+      "bytes": 7533,
+      "sha256": "5d1ddc7109b258e5bacf9723de1dc6de627b4ac5b5cb88a962b4b1c31d3a62a8",
+      "git_blob_sha1": "ab3a3dafcac9f6f180f3e09ea45419d7403c639d"
+    },
+    {
+      "ruta": "mina.sqlite",
+      "bytes": 1003520,
+      "sha256": "0b1d93d02c97a70f92886ac8e82d9081a9ce701df3e127f9b071a2ca7ce9de0c",
+      "git_blob_sha1": "15299e1b8beb6a0bf8fb5c9cea1764092e9c01cf"
+    },
+    {
+      "ruta": "dolar.json",
+      "bytes": 13015,
+      "sha256": "fdc44ac2e7ebe1d6c52d24998bd1f59672ae245f8cd8c4c026d378bfd3318266",
+      "git_blob_sha1": "21ac0b5f0f04a019388e6b273589685e4f9d2a59"
+    },
+    {
+      "ruta": "cobre.json",
+      "bytes": 12507,
+      "sha256": "ad6dc426282b497ac22e04e9bb1bb9bb4332fe69a73b8e27c3917555a4fac19c",
+      "git_blob_sha1": "f44e02daf338827b0d6eb4b28d5fd8e229a042ac"
+    },
+    {
+      "ruta": "inputs/origen_costos_planta.csv",
+      "bytes": 3979,
+      "sha256": "9fe17b762091833b973a2a9e487c1ed497bafc5a914b5e2dd8876a6b1a9d83d4",
+      "git_blob_sha1": "583b922d3d25df878946264c8a2bf4b02cf2b5d5"
+    },
+    {
+      "ruta": "inputs/origen_leyes_laboratorio.json",
+      "bytes": 240298,
+      "sha256": "4481b7936ff35a82cbc113842c01f23dbdb64620b6ea17c498cb14ac10b9ef31",
+      "git_blob_sha1": "58185ba8271f9f168af4a27336b5791d7417bea1"
+    },
+    {
+      "ruta": "resultados/caso_negocio.csv",
+      "bytes": 722,
+      "sha256": "24adaf127551208889d94fb21dc4074e655e3f10800868c1e8d82e3166025e21",
+      "git_blob_sha1": "6d6e7457d795806028f9436aad2e964a215dc6cb"
+    },
+    {
+      "ruta": "resultados/cobertura_lotes.csv",
+      "bytes": 646841,
+      "sha256": "f224dfb507ef6acf30d041d6ed591624db73f1d5ab2b0ca103e4b37de898fbd2",
+      "git_blob_sha1": "233141d249fe599d1334ba8d748cbc899b40945a"
+    },
+    {
+      "ruta": "resultados/cobre_diario.csv",
+      "bytes": 5950,
+      "sha256": "bef91785078a0f3b3f6044b702d9daead19de6d164733601038fa33031f4fdcd",
+      "git_blob_sha1": "194ddd16ea5c14ae1c90993ea44d9fffba49f172"
+    },
+    {
+      "ruta": "resultados/dolar_diario.csv",
+      "bytes": 6463,
+      "sha256": "2f581ead65bb450f0def876cfcd4742d2993d4e9820e167b07c28544f4b55407",
+      "git_blob_sha1": "318dd0a349e4af671979dc2a0a13b0601edfd798"
+    },
+    {
+      "ruta": "resultados/hallazgos.json",
+      "bytes": 656,
+      "sha256": "f8974e1c3f8b2468cc3bc827c98af9d73fd714bd15f229726f8eca19f4bd79c4",
+      "git_blob_sha1": "aec22238d501c0348a1ef694dd58146023092116"
+    },
+    {
+      "ruta": "resultados/lotes_preparados.csv",
+      "bytes": 2311602,
+      "sha256": "b0b4035e472e2076f1188b8a35bd1fcc3770053f86c95bf097ebf74b9dd5f555",
+      "git_blob_sha1": "5d4ea25d8aeb3977b0884775c927121f2fabd397"
+    },
+    {
+      "ruta": "resultados/mensual.csv",
+      "bytes": 3276,
+      "sha256": "3ec68f088c22e5c13a32ed1acf8c4c3916961fda47e24c65db2782beae8a0e4e",
+      "git_blob_sha1": "ff089a352bf72bbd635281b40ecccb51f1b59c51"
+    },
+    {
+      "ruta": "resultados/planta_mes.csv",
+      "bytes": 10464,
+      "sha256": "7d100b803f5b36db8a3fa36844accb5fd6276ad085bdbfabb2f67f6c807561bb",
+      "git_blob_sha1": "5e7d4b98b01d7857ee2c353c2bea440801ea5824"
+    },
+    {
+      "ruta": "resultados/resumen.json",
+      "bytes": 1433,
+      "sha256": "d46138123683e5c22f0a94727a58aa510513698477d98ca8fb1921ff690e3aee",
+      "git_blob_sha1": "94b1ef96ee4f801a23b1e8f7f34b5ddbdf1b60f4"
+    },
+    {
+      "ruta": "graficos/figura_2.png",
+      "bytes": 112549,
+      "sha256": "4c330979a6cc5bb44956774f51eeb2a68d5a89588e0d0f51f09e4370843ab37f",
+      "git_blob_sha1": "30971790bcf15f00a11e64b1e74c711f2c642e89"
+    },
+    {
+      "ruta": "graficos/figura_3.png",
+      "bytes": 66648,
+      "sha256": "f1bf108aea115d5630f1e4e6cc12155715249121d47acd29f83731c53995d42a",
+      "git_blob_sha1": "4aa16c55dc4660138856907eae9b21880e37a09f"
+    },
+    {
+      "ruta": "graficos/figura_4.png",
+      "bytes": 56616,
+      "sha256": "8054ed04a48f44e07cc692e571c44714818344494213b9519c17602317271a49",
+      "git_blob_sha1": "84e0e92e2cc2d302850123dc2fa763e987ab3c25"
+    },
+    {
+      "ruta": "graficos/figuras_3_4.png",
+      "bytes": 100119,
+      "sha256": "7a4cd378e1b9e8bb5cd836d266f627487ef95c2923694ea4d0e41778c9eb440a",
+      "git_blob_sha1": "ee0c6ec24ccc8ecc04a8d63d490194008707479e"
+    }
+  ]
+}
