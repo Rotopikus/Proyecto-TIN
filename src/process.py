@@ -395,3 +395,23 @@ def generar_graficos(df_final, plantas, libra_cobre, n_lotes_originales):
     print("=====================================")
 
 generar_graficos(df_final, plantas, libra_cobre, n_lotes_originales)
+
+# --- 8. COBERTURA DE DATOS ---
+incluidos = int(df_final["lote_id"].sum())
+excluidos = n_lotes_originales - incluidos
+sin_costos = len(lotes) - incluidos
+
+pares = len(df_final)
+pares_posibles = plantas["planta_id"].nunique() * 12
+
+print("\n========== COBERTURA DE DATOS ==========")
+print(f"Lotes originales: {n_lotes_originales}")
+print(f"Lotes incluidos: {incluidos}")
+print(f"Lotes excluidos: {excluidos} ({excluidos/n_lotes_originales:.2%})")
+print(f"Tonelaje ambiguo: {con_coma.sum()}")
+print(f"Ley o recuperación inválida: {invalidos.sum()}")
+print(f"Duplicados: {duplicados.sum()}")
+print(f"Fuera de 2025: {fuera_periodo.sum()}")
+print(f"Sin costos completos o disponibles: {sin_costos}")
+print(f"Pares planta-mes: {pares} de {pares_posibles} ({pares/pares_posibles:.2%})")
+print("=========================================")
