@@ -12,6 +12,7 @@ htmlcov/
 .ipynb_checkpoints/
 /data_original/
 /raw_data/
+/graficos
 /processed_data/
 *.parquet
 spark-warehouse/
