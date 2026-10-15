@@ -282,6 +282,15 @@ def generar_graficos(df_final, plantas, libra_cobre, n_lotes_originales):
     max_y = mensual[["precio", "costo", "tc_fijo"]].max().max()
     limite_y = 2 * np.ceil((max_y + 0.2) / 2)
 
+    print("\n==========================================")
+    print(" RESULTADOS DE CAMBIO DE PRECIO Y COSTO")
+    print("==========================================")
+    print(f"Precio en Enero: {mensual.loc["2025-01", "precio"]:.3f} USD/lb")
+    print(f"Precio en Diciembre: {mensual.loc["2025-12", "precio"]:.3f} USD/lb")
+    print(f"Costo en Enero: {mensual.loc["2025-01", "costo"]:.3f} USD/lb")
+    print(f"Costo en Diciembre:  {mensual.loc["2025-12", "costo"]:.3f} USD/lb")
+    print("==========================================")
+
     ax.set_ylim(0, limite_y)
     ax.set_yticks(np.arange(0, limite_y + 1, 2))
 
@@ -355,5 +364,34 @@ def generar_graficos(df_final, plantas, libra_cobre, n_lotes_originales):
         print(f"ADVERTENCIA: {n_costo_cero} pares planta-mes tienen costo cero. Revisar costos faltantes.")
     incluidos = int(df_final.lote_id.sum())
     excluidos = n_lotes_originales - incluidos
+
+    # --- CASO DE NEGOCIO: ENERO VS DICIEMBRE ---
+
+    ene = df_final[df_final["mes_str"] == "2025-01"].set_index("planta_id")
+    dic = df_final[df_final["mes_str"] == "2025-12"].set_index("planta_id")
+
+    # Verificar que se comparen las mismas plantas
+    if set(ene.index) != set(dic.index):
+        raise ValueError("Faltan plantas en enero o diciembre.")
+
+    # Costo unitario en pesos de enero por planta
+    costo_enero_clp_lb = ene["costo_total_clp"] / ene["libras_finas_op"]
+
+    # Costo hipotético de diciembre usando el costo unitario de enero
+    costo_hipotetico = (costo_enero_clp_lb * dic["libras_finas_op"]).sum()
+
+    # Costo real de diciembre
+    costo_real = dic["costo_total_clp"].sum()
+
+    # Diferencia y escenario ilustrativo
+    brecha = costo_real - costo_hipotetico
+    escenario_10 = brecha * 0.10
+
+    print("\n========== CASO DE NEGOCIO ==========")
+    print(f"Costo real diciembre: ${costo_real:,.0f} CLP")
+    print(f"Costo hipotético:     ${costo_hipotetico:,.0f} CLP")
+    print(f"Brecha:              ${brecha:,.0f} CLP")
+    print(f"Escenario 10%:       ${escenario_10:,.0f} CLP")
+    print("=====================================")
 
 generar_graficos(df_final, plantas, libra_cobre, n_lotes_originales)
