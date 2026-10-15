@@ -27,7 +27,10 @@ tablas = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", con)
 print("tablas:", tablas["name"].tolist())
 
 for name in tablas["name"].tolist():
-  pdf = pd.read_sql(f"SELECT * FROM {name}", con)
+  if name == "lotes":
+    pdf = pd.read_sql(f"SELECT rowid AS fila_fuente, * FROM {name} ORDER BY rowid", con)
+  else:
+    pdf = pd.read_sql(f"SELECT * FROM {name}", con)
   df = spark.createDataFrame(pdf)
   df.printSchema()
   print("filas:", df.count())
