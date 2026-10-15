@@ -3,8 +3,6 @@ from datetime import date
 
 ID_FECHA = date.today().strftime("%Y%m%d") 
 
-#ID_FECHA = "20261013"
-
 regiones = pd.read_parquet(f"raw_data/regiones/{ID_FECHA}")
 plantas = pd.read_parquet(f"raw_data/plantas/{ID_FECHA}")
 rajos = pd.read_parquet(f"raw_data/rajos/{ID_FECHA}")
@@ -84,8 +82,6 @@ lotes = lotes.loc[~duplicados].copy()
 
 # Excluir lotes fuera del período de análisis (2025)
 fuera_periodo = ~lotes["fecha"].dt.year.eq(2025)
-
-print(f"Lotes excluidos por estar fuera de 2025: {fuera_periodo.sum()}")
 
 lotes = lotes.loc[~fuera_periodo].copy()
 
