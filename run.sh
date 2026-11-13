@@ -40,7 +40,7 @@ case "${1:-}" in
 esac
 if (( $# > 1 )); then usage >&2; fail "Solo se permite un argumento."; fi
 
-for filename in requirements.txt src/extraccion.py src/process.py; do
+for filename in requirements.txt src/bronze.py src/process.py; do
   [[ -f "$filename" ]] || fail "No existe $filename. Coloca run.sh en la raíz del repositorio."
 done
 
@@ -109,7 +109,7 @@ export SPARK_LOCAL_IP="${SPARK_LOCAL_IP:-127.0.0.1}"
 # Los dos scripts existentes construyen sus carpetas con date.today().
 RUN_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
 log "Ejecutando extracción (fecha de las carpetas: $RUN_DATE)..."
-"$VENV_PY" -u src/extraccion.py
+"$VENV_PY" -u src/bronze.py
 
 # Evita una lectura accidental de otra carpeta si el día cambia entre las etapas.
 CURRENT_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
