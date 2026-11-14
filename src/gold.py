@@ -1,0 +1,220 @@
+import pandas as pd
+from datetime import date
+from pathlib import Path
+
+ID_FECHA = date.today().strftime("%Y%m%d") 
+
+plantas = pd.read_parquet(f"process_data/plantas/{ID_FECHA}/plantas.parquet")
+lotes = pd.read_parquet(f"process_data/lotes/{ID_FECHA}/lotes.parquet")
+costos = pd.read_parquet(f"process_data/costos/{ID_FECHA}/costos.parquet")
+origen_leyes = pd.read_parquet(f"process_data/origen_leyes/{ID_FECHA}/origen_leyes.parquet")
+dolar = pd.read_parquet(f"process_data/dolar/{ID_FECHA}/dolar.parquet")
+libra_cobre = pd.read_parquet(f"process_data/libra_cobre/{ID_FECHA}/libra_cobre.parquet")
+
+
+# Calcular cobre fino con la ley de Operaciones (Definición Principal)
+lotes["cobre_fino_op_ton"] = (
+    lotes["toneladas_tratadas"] * 
+    (lotes["ley_pct"] / 100) * 
+    (lotes["recuperacion_pct"] / 100)
+)
+
+# Integrar leyes de laboratorio
+
+if not origen_leyes.empty:
+    lab_grouped = origen_leyes.groupby("lote_id")["ley_lab_prom"].first().reset_index()
+    lab_grouped.rename(columns={"ley_lab_prom": "ley_lab"}, inplace=True)
+    
+    # Cruzamos con lotes
+    lotes = lotes.merge(lab_grouped, on="lote_id", how="left")
+    
+    # Definición Híbrida: Si hay ley de laboratorio, se usa; si es NaN, se mantiene la de Operaciones
+    lotes["ley_hibrida"] = lotes["ley_lab"].fillna(lotes["ley_pct"])
+else:
+    lotes["ley_hibrida"] = lotes["ley_pct"]
+
+# Calcular cobre fino con ley híbrida
+lotes["cobre_fino_hib_ton"] = (
+    lotes["toneladas_tratadas"] * 
+    (lotes["ley_hibrida"] / 100) * 
+    (lotes["recuperacion_pct"] / 100)
+)
+
+# Convertir toneladas de cobre fino a libras (1 tonelada métrica = 2204.62 libras, o dividir por 0.45359237 / 1000)
+lotes["libras_finas_op"] = lotes["cobre_fino_op_ton"] * 1000 / 0.45359237
+lotes["libras_finas_hib"] = lotes["cobre_fino_hib_ton"] * 1000 / 0.45359237
+
+# Agrupar producción por planta y mes
+produccion_mensual = lotes.groupby(["planta_id", "mes_str"]).agg({
+    "libras_finas_op": "sum",
+    "libras_finas_hib": "sum",
+    "lote_id": "count" # Para medir cobertura o conteo de lotes
+}).reset_index()
+
+print("Lotes procesados:", len(lotes))
+print("Lotes únicos:", lotes["lote_id"].nunique())
+print("Pares planta-mes:", len(produccion_mensual))
+
+print(produccion_mensual.head())
+
+
+# Calcular costo total de planta
+costos["costo_total_clp"] = costos["energia_clp"] + costos["insumos_clp"] + costos["mano_obra_clp"]
+
+# Cruzar costos con plantas para obtener planta_id
+costos_unificado = costos.merge(
+    plantas, 
+    left_on="nombre_planta", 
+    right_on="nombre_planta_std", 
+    how="left"
+)
+
+columnas_costos = ["energia_clp", "insumos_clp", "mano_obra_clp"]
+costos_unificado["completo"] = costos_unificado[columnas_costos].notna().all(axis=1)
+
+# Agrupar costos por planta_id y mes
+costos_mensual = costos_unificado.groupby(["planta_id", "mes_str"]).agg({
+    "costo_total_clp": "sum",
+    "completo": "all"
+}).reset_index()
+
+# Excluirlos del cálculo
+costos_mensual = costos_mensual[costos_mensual["completo"]].drop(columns="completo")
+
+print("Pares planta-mes con costos completos:", len(costos_mensual))
+print(costos_mensual.head())
+
+# Preparar tipo de cambio mensual
+dolar_mensual = dolar.groupby("mes_str")["valor"].mean().reset_index() # Promedio mensual del dólar
+dolar_mensual.rename(columns={"valor": "tipo_cambio"}, inplace=True)
+
+print(dolar_mensual.head())
+
+# Calcular costo por libra
+df_final = produccion_mensual.merge(costos_mensual, on=["planta_id", "mes_str"], how="inner")
+df_final = df_final.merge(dolar_mensual, on="mes_str", how="inner")
+
+# Convertir CLP a USD
+df_final["costo_total_usd"] = df_final["costo_total_clp"] / df_final["tipo_cambio"]
+
+# Calcular Costo Directo por Libra (Principal y Alternativo)
+df_final["costo_libra_op"] = df_final["costo_total_usd"] / df_final["libras_finas_op"]
+df_final["costo_libra_hib"] = df_final["costo_total_usd"] / df_final["libras_finas_hib"]
+
+# --- 6. RESULTADOS GLOBALES Y DE SENSIBILIDAD ---
+costo_promedio_op = df_final["costo_total_usd"].sum() / df_final["libras_finas_op"].sum()
+costo_promedio_hib = df_final["costo_total_usd"].sum() / df_final["libras_finas_hib"].sum()
+
+
+dif_abs = abs(costo_promedio_op - costo_promedio_hib)
+dif_porc = (dif_abs / costo_promedio_op) * 100
+
+print("\n==========================================")
+print(" RESULTADOS DE SENSIBILIDAD PARA EL INFORME")
+print("==========================================")
+print(f"Resultado Principal (Ley Operaciones): {costo_promedio_op:.4f} USD/lb")
+print(f"Resultado Alternativo (Híbrido Lab):   {costo_promedio_hib:.4f} USD/lb")
+print(f"Diferencia Absoluta:                   {dif_abs:.4f} USD/lb")
+print(f"Diferencia Porcentual:                 {dif_porc:.2f}%")
+print("==========================================")
+
+
+# Calcular precio mensual del cobre
+libra_cobre["mes_str"] = libra_cobre["fecha"].dt.to_period("M").astype(str)
+
+cobre_mensual = libra_cobre.groupby("mes_str")["valor"].mean().reset_index()
+cobre_mensual.rename(columns={"valor": "precio_cobre"}, inplace=True)
+
+# Construir dimensión mes
+dim_mes = dolar_mensual.merge(
+    cobre_mensual,
+    on="mes_str",
+    how="inner"
+)
+
+# Conservar los meses del análisis
+dim_mes = dim_mes[
+    dim_mes["mes_str"].between("2025-01", "2025-12")
+].copy()
+
+# Verificar dimensión
+print("Meses:", len(dim_mes))
+print(dim_mes)
+
+ruta = Path(f"gold_data/dim_mes/{ID_FECHA}")
+ruta.mkdir(parents=True, exist_ok=True)
+
+dim_mes.to_parquet(ruta / "dim_mes.parquet", index=False)
+
+print("Dimensión mes guardada en:", ruta)
+
+assert len(dim_mes) == 12, "Se esperaban 12 meses"
+assert dim_mes["mes_str"].is_unique, "Hay meses duplicados"
+assert dim_mes[["tipo_cambio", "precio_cobre"]].notna().all().all(), \
+    "Existen valores faltantes en dim_mes"
+
+print("Validación dim_mes: OK")
+
+# Construir dimensión planta
+dim_planta = plantas.copy()
+
+# Verificar que cada planta tenga una clave única
+assert dim_planta["planta_id"].is_unique, "Existen plantas duplicadas"
+
+# Guardar dimensión
+ruta = Path(f"gold_data/dim_planta/{ID_FECHA}")
+ruta.mkdir(parents=True, exist_ok=True)
+
+dim_planta.to_parquet(ruta / "dim_planta.parquet", index=False)
+
+print("Dimensión planta guardada:", len(dim_planta), "plantas")
+
+# Construir tabla de hechos
+
+fact_costo_produccion_mensual = df_final[[
+    "planta_id",
+    "mes_str",
+    "costo_total_clp",
+    "costo_total_usd",
+    "libras_finas_op",
+    "libras_finas_hib",
+    "lote_id"
+]].copy()
+
+# lote_id ahora representa la cantidad de lotes, no su identificador
+fact_costo_produccion_mensual.rename(
+    columns={"lote_id": "cantidad_lotes"},
+    inplace=True
+)
+
+ruta = Path(f"gold_data/fact_costo_produccion_mensual/{ID_FECHA}")
+ruta.mkdir(parents=True, exist_ok=True)
+
+fact_costo_produccion_mensual.to_parquet(
+    ruta / "fact_costo_produccion_mensual.parquet",
+    index=False
+)
+
+print("Tabla de hechos guardada:", len(fact_costo_produccion_mensual), "filas")
+
+fact = fact_costo_produccion_mensual
+
+# Grano único: una fila por planta-mes
+assert not fact.duplicated(
+    subset=["planta_id", "mes_str"]
+).any(), "Hay pares planta-mes duplicados"
+
+# No existen plantas sin dimensión
+assert fact["planta_id"].isin(
+    dim_planta["planta_id"]
+).all(), "Hay plantas huérfanas"
+
+# No existen meses sin dimensión
+assert fact["mes_str"].isin(
+    dim_mes["mes_str"]
+).all(), "Hay meses huérfanos"
+
+# Producción válida
+assert (fact["libras_finas_op"] > 0).all(), "Hay producción inválida"
+
+print("Validaciones del modelo dimensional: OK")
