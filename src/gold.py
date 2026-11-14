@@ -4,6 +4,7 @@ from pathlib import Path
 
 ID_FECHA = date.today().strftime("%Y%m%d") 
 
+regiones = pd.read_parquet(f"process_data/regiones/{ID_FECHA}/regiones.parquet")
 plantas = pd.read_parquet(f"process_data/plantas/{ID_FECHA}/plantas.parquet")
 lotes = pd.read_parquet(f"process_data/lotes/{ID_FECHA}/lotes.parquet")
 costos = pd.read_parquet(f"process_data/costos/{ID_FECHA}/costos.parquet")
@@ -46,6 +47,7 @@ lotes["libras_finas_hib"] = lotes["cobre_fino_hib_ton"] * 1000 / 0.45359237
 
 # Agrupar producción por planta y mes
 produccion_mensual = lotes.groupby(["planta_id", "mes_str"]).agg({
+    "toneladas_tratadas": "sum",
     "libras_finas_op": "sum",
     "libras_finas_hib": "sum",
     "lote_id": "count" # Para medir cobertura o conteo de lotes
@@ -74,6 +76,9 @@ costos_unificado["completo"] = costos_unificado[columnas_costos].notna().all(axi
 
 # Agrupar costos por planta_id y mes
 costos_mensual = costos_unificado.groupby(["planta_id", "mes_str"]).agg({
+    "energia_clp": "sum",
+    "insumos_clp": "sum",
+    "mano_obra_clp": "sum",
     "costo_total_clp": "sum",
     "completo": "all"
 }).reset_index()
@@ -137,6 +142,35 @@ dim_mes = dim_mes[
     dim_mes["mes_str"].between("2025-01", "2025-12")
 ].copy()
 
+dim_mes = dim_mes.rename(columns={
+    "mes_str": "anio_mes",
+    "tipo_cambio": "tc_clp_usd",
+    "precio_cobre": "precio_cobre_usd_lb"
+})
+
+fechas = pd.to_datetime(dim_mes["anio_mes"] + "-01")
+
+dim_mes["mes_key"] = fechas.dt.strftime("%Y%m").astype(int)
+dim_mes["trimestre"] = fechas.dt.quarter
+
+meses = {
+    1: "Enero", 2: "Febrero", 3: "Marzo",
+    4: "Abril", 5: "Mayo", 6: "Junio",
+    7: "Julio", 8: "Agosto", 9: "Septiembre",
+    10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+}
+
+dim_mes["mes_nombre"] = fechas.dt.month.map(meses)
+
+dim_mes = dim_mes[[
+    "mes_key",
+    "anio_mes",
+    "trimestre",
+    "mes_nombre",
+    "tc_clp_usd",
+    "precio_cobre_usd_lb"
+]]
+
 # Verificar dimensión
 print("Meses:", len(dim_mes))
 print(dim_mes)
@@ -149,8 +183,8 @@ dim_mes.to_parquet(ruta / "dim_mes.parquet", index=False)
 print("Dimensión mes guardada en:", ruta)
 
 assert len(dim_mes) == 12, "Se esperaban 12 meses"
-assert dim_mes["mes_str"].is_unique, "Hay meses duplicados"
-assert dim_mes[["tipo_cambio", "precio_cobre"]].notna().all().all(), \
+assert dim_mes["anio_mes"].is_unique, "Hay meses duplicados"
+assert dim_mes[["tc_clp_usd", "precio_cobre_usd_lb"]].notna().all().all(), \
     "Existen valores faltantes en dim_mes"
 
 print("Validación dim_mes: OK")
@@ -158,8 +192,19 @@ print("Validación dim_mes: OK")
 # Construir dimensión planta
 dim_planta = plantas.copy()
 
+dim_planta["region_nombre"] = regiones["region"]
+
+dim_planta = dim_planta.rename(columns={
+    "nombre_planta_std": "planta_nombre",
+    "planta_id": "planta_key"
+})
+
+dim_planta.drop(columns=["region_id", "nombre"], inplace=True)
+
+print(dim_planta)
+
 # Verificar que cada planta tenga una clave única
-assert dim_planta["planta_id"].is_unique, "Existen plantas duplicadas"
+assert dim_planta["planta_key"].is_unique, "Existen plantas duplicadas"
 
 # Guardar dimensión
 ruta = Path(f"gold_data/dim_planta/{ID_FECHA}")
@@ -174,12 +219,38 @@ print("Dimensión planta guardada:", len(dim_planta), "plantas")
 fact_costo_produccion_mensual = df_final[[
     "planta_id",
     "mes_str",
+    "energia_clp",
+    "insumos_clp",
+    "mano_obra_clp",
     "costo_total_clp",
     "costo_total_usd",
+    "toneladas_tratadas",
     "libras_finas_op",
     "libras_finas_hib",
     "lote_id"
 ]].copy()
+
+fact_costo_produccion_mensual = fact_costo_produccion_mensual.rename(columns={
+    "planta_id": "planta_key",
+    "costo_total_clp": "costo_directo_clp",
+    "costo_total_usd": "costo_directo_usd",
+    "toneladas_tratadas": "toneladas_validas",
+    "libras_finas_op": "libras_finas_ops",
+    "libras_finas_hib": "libras_finas_hibridas",
+    "lote_id": "n_lotes"
+})
+
+fact_costo_produccion_mensual["mes_key"] = (
+    fact_costo_produccion_mensual["mes_str"]
+    .str.replace("-", "", regex=False)
+    .astype(int)
+)
+
+fact_costo_produccion_mensual = fact_costo_produccion_mensual.drop(
+    columns="mes_str"
+)
+
+fact_costo_produccion_mensual["apto_kpi"] = True
 
 # lote_id ahora representa la cantidad de lotes, no su identificador
 fact_costo_produccion_mensual.rename(
@@ -201,20 +272,20 @@ fact = fact_costo_produccion_mensual
 
 # Grano único: una fila por planta-mes
 assert not fact.duplicated(
-    subset=["planta_id", "mes_str"]
+    subset=["planta_key", "mes_key"]
 ).any(), "Hay pares planta-mes duplicados"
 
 # No existen plantas sin dimensión
-assert fact["planta_id"].isin(
-    dim_planta["planta_id"]
+assert fact["planta_key"].isin(
+    dim_planta["planta_key"]
 ).all(), "Hay plantas huérfanas"
 
 # No existen meses sin dimensión
-assert fact["mes_str"].isin(
-    dim_mes["mes_str"]
+assert fact["mes_key"].isin(
+    dim_mes["mes_key"]
 ).all(), "Hay meses huérfanos"
 
 # Producción válida
-assert (fact["libras_finas_op"] > 0).all(), "Hay producción inválida"
+assert (fact["libras_finas_ops"] > 0).all(), "Hay producción inválida"
 
 print("Validaciones del modelo dimensional: OK")

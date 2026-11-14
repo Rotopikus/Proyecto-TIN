@@ -92,6 +92,16 @@ lotes = lotes.loc[~fuera_periodo].copy()
 # Agregar mes en formato 'YYYY-MM' en lotes para cruzar con costos
 lotes["mes_str"] = lotes["fecha"].dt.to_period("M").astype(str)
 
+print(regiones)
+
+# Guardar regiones en Silver
+ruta = Path(f"process_data/regiones/{ID_FECHA}")
+ruta.mkdir(parents=True, exist_ok=True)
+
+regiones.to_parquet(ruta / "regiones.parquet", index=False)
+
+print("Regiones guardadas en Silver")
+
 # Guardar plantas en Silver
 ruta = Path(f"process_data/plantas/{ID_FECHA}")
 ruta.mkdir(parents=True, exist_ok=True)
