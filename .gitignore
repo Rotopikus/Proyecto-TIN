@@ -28,3 +28,10 @@ spark-events/
 .DS_Store
 Thumbs.db
 *.log
+
+# Prototipo
+.venv-prototipo/
+
+# Configuración local de cada desarrollador
+CLAUDE.md
+.claude/

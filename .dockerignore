@@ -10,3 +10,4 @@ gold_data/
 graficos/
 spark-warehouse/
 metastore_db/
+.venv-prototipo/

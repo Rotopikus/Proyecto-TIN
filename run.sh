@@ -128,3 +128,9 @@ log "ELT completado en $((SECONDS - START_SECONDS)) segundos."
 printf 'Bronze: raw_data/\n'
 printf 'Silver: process_data/\n'
 printf 'Gold: gold_data/\n'
+
+# Las cifras del informe salen de la misma capa semántica que lee el prototipo.
+log "Cifras del informe y del prototipo (src/metrica.py)..."
+"$VENV_PY" -u src/metrica.py
+
+printf '\nPrototipo: bash prototipo.sh\n'

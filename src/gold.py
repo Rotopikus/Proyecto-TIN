@@ -45,11 +45,22 @@ lotes["cobre_fino_hib_ton"] = (
 lotes["libras_finas_op"] = lotes["cobre_fino_op_ton"] * 1000 / 0.45359237
 lotes["libras_finas_hib"] = lotes["cobre_fino_hib_ton"] * 1000 / 0.45359237
 
+# Definición promedio simple: cada lote toma la ley media aritmética de Operaciones
+# de su planta-mes, sin ponderar por tonelaje. Tonelaje y recuperación siguen siendo
+# los del lote, así la diferencia con la principal sale sólo de cómo se promedia la ley.
+lotes["ley_simple"] = lotes.groupby(["planta_id", "mes_str"])["ley_pct"].transform("mean")
+lotes["libras_finas_simple"] = (
+    lotes["toneladas_tratadas"] *
+    (lotes["ley_simple"] / 100) *
+    (lotes["recuperacion_pct"] / 100)
+) * 1000 / 0.45359237
+
 # Agrupar producción por planta y mes
 produccion_mensual = lotes.groupby(["planta_id", "mes_str"]).agg({
     "toneladas_tratadas": "sum",
     "libras_finas_op": "sum",
     "libras_finas_hib": "sum",
+    "libras_finas_simple": "sum",
     "lote_id": "count" # Para medir cobertura o conteo de lotes
 }).reset_index()
 
@@ -239,6 +250,7 @@ fact_costo_produccion_mensual = df_final[[
     "toneladas_tratadas",
     "libras_finas_op",
     "libras_finas_hib",
+    "libras_finas_simple",
     "lote_id"
 ]].copy()
 
