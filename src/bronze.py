@@ -112,7 +112,7 @@ def descargar_indicador(url, nombre):
 
     return data["serie"]
 
-descargar_indicador("https://mindicador.cl/api/dolar/202", "dólar 2025")
+descargar_indicador("https://mindicador.cl/api/dolar/2025", "dólar 2025")
 descargar_indicador("https://mindicador.cl/api/dolar/2026", "dólar 2026")
 descargar_indicador("https://mindicador.cl/api/libra_cobre/2025", "cobre 2025")
 descargar_indicador("https://mindicador.cl/api/libra_cobre/2026", "cobre 2026")
