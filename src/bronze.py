@@ -6,6 +6,8 @@ from pathlib import Path
 import os
 import shutil
 from pathlib import Path
+import json
+from datetime import datetime, timezone
 
 import pandas as pd
 import requests
@@ -62,29 +64,66 @@ session = requests.Session()
 retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
 session.mount('https://', HTTPAdapter(max_retries=retries))
 
+
+# Registrar qué fuente se utilizó en cada descarga
+estado_fuentes = {}
+
 def descargar_indicador(url, nombre):
     print(f"Descargando {nombre} desde {url}...")
+
+    ruta = Path(f"raw_data/mindicador/{ID_FECHA}")
+    ruta.mkdir(parents=True, exist_ok=True)
+
+    destino = ruta / f"{nombre}.json"
+    respaldo = Path(f"data_original/respaldo_API/{nombre}.json")
+
     try:
         resp = session.get(url, headers=headers, timeout=60)
         resp.raise_for_status()
         data = resp.json()
+
         if "serie" in data:
-            ruta = Path(f"raw_data/mindicador/{ID_FECHA}")
-            ruta.mkdir(parents=True, exist_ok=True)
-
-            destino = ruta / f"{nombre}.json"
             destino.write_bytes(resp.content)
+            fuente = "API"
 
-            print("Guardado en:", destino)
-            return data["serie"]
         else:
-            print(f"Aviso: la respuesta de {nombre} no tiene la clave 'serie'.")
-            return []
-    except Exception as e:
-        print(f"Error al descargar {nombre}: {e}")
-        return []
+            raise ValueError(
+                f"La respuesta de {nombre} no tiene la clave 'serie'."
+            )
 
-descargar_indicador("https://mindicador.cl/api/dolar/2025", "dólar 2025")
+    except (requests.RequestException, ValueError) as e:
+        print(f"AVISO: Falló la API de {nombre}: {e}")
+        print("Intentando utilizar respaldo...")
+
+        contenido = respaldo.read_bytes()
+        data = json.loads(contenido)
+
+        destino.write_bytes(contenido)
+        fuente = "RESPALDO"
+
+        print(f"AVISO: Utilizando respaldo de {nombre}")
+
+    estado_fuentes[nombre] = {
+        "fuente": fuente,
+        "fecha_ejecucion": datetime.now(timezone.utc).isoformat()
+    }
+
+    print(f"Guardado en: {destino} | Fuente: {fuente}")
+
+    return data["serie"]
+
+descargar_indicador("https://mindicador.cl/api/dolar/202", "dólar 2025")
 descargar_indicador("https://mindicador.cl/api/dolar/2026", "dólar 2026")
 descargar_indicador("https://mindicador.cl/api/libra_cobre/2025", "cobre 2025")
 descargar_indicador("https://mindicador.cl/api/libra_cobre/2026", "cobre 2026")
+
+ruta_estado = Path(
+    f"raw_data/mindicador/{ID_FECHA}/estado_fuentes.json"
+)
+
+ruta_estado.write_text(
+    json.dumps(estado_fuentes, indent=2, ensure_ascii=False),
+    encoding="utf-8"
+)
+
+print("Estado de las fuentes guardado en:", ruta_estado)
