@@ -13,7 +13,8 @@ htmlcov/
 /data_original/
 /raw_data/
 /graficos
-/processed_data/
+/process_data/
+/gold_data/
 *.parquet
 spark-warehouse/
 metastore_db/

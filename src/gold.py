@@ -192,11 +192,23 @@ print("Validación dim_mes: OK")
 # Construir dimensión planta
 dim_planta = plantas.copy()
 
-dim_planta["region_nombre"] = regiones["region"]
+dim_planta = plantas.merge(
+    regiones[["region_id", "region"]],
+    on="region_id",
+    how="left",
+    validate="many_to_one"
+)
+
+dim_planta["estado_region"] = dim_planta["region"].apply(
+    lambda x: "Informada" if pd.notna(x) else "No informada"
+)
+
+dim_planta["region"] = dim_planta["region"].fillna("No informada")
 
 dim_planta = dim_planta.rename(columns={
     "nombre_planta_std": "planta_nombre",
-    "planta_id": "planta_key"
+    "planta_id": "planta_key",
+    "region": "region_nombre"
 })
 
 dim_planta.drop(columns=["region_id", "nombre"], inplace=True)
@@ -251,12 +263,6 @@ fact_costo_produccion_mensual = fact_costo_produccion_mensual.drop(
 )
 
 fact_costo_produccion_mensual["apto_kpi"] = True
-
-# lote_id ahora representa la cantidad de lotes, no su identificador
-fact_costo_produccion_mensual.rename(
-    columns={"lote_id": "cantidad_lotes"},
-    inplace=True
-)
 
 ruta = Path(f"gold_data/fact_costo_produccion_mensual/{ID_FECHA}")
 ruta.mkdir(parents=True, exist_ok=True)

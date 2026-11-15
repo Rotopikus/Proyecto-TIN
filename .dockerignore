@@ -5,7 +5,8 @@ env/
 __pycache__/
 data_original/
 raw_data/
-processed_data/
+process_data/
+gold_data/
 graficos/
 spark-warehouse/
 metastore_db/

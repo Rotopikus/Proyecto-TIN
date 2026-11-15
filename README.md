@@ -32,15 +32,23 @@ La estructura de entrada esperada es:
 ```text
 Proyecto-TIN/
 ├── data_original/
-│   ├── origen_mina.sqlite
-│   ├── origen_costos_planta.csv
-│   └── origen_leyes_laboratorio.json
+│    ├── origen_mina.sqlite
+│    ├── origen_costos_planta.csv
+│    └── origen_leyes_laboratorio.json
 ├── src/
-│   ├── extraccion.py
-│   └── process.py
-└── requirements.txt
+│   ├── bronze.py
+│   ├── silver.py
+│   └── gold.py
+├── raw_data/              # Bronze: fuentes crudas
+├── process_data/          # Silver: Parquet limpios
+├── gold_data/             # Gold: modelo dimensional
+│   ├── dim_mes/
+│   ├── dim_planta/
+│   └── fact_costo_produccion_mensual/
+├── requirements.txt
+├── Dockerfile
+└── run.sh
 ```
-Recuerda subir los archivos de datos de minería grupo 3 a la carpeta data_original.
 
 ### 4. Ejecutar el código
 
@@ -59,17 +67,17 @@ macOS o Linux:
 
 ```bash
 docker build -t proyecto-tin .
-docker run --rm -v "$PWD/data_original:/app/data_original:ro" -v "$PWD/raw_data:/app/raw_data" -v "$PWD/graficos:/app/graficos" proyecto-tin
+docker run --rm -v "$PWD/data_original:/app/data_original:ro" -v "$PWD/raw_data:/app/raw_data" -v "$PWD/process_data:/app/process_data" -v "$PWD/gold_data:/app/gold_data" proyecto-tin
 ```
 
 Windows (PowerShell):
 
 ```powershell
 docker build -t proyecto-tin .
-docker run --rm -v "${PWD}/data_original:/app/data_original:ro" -v "${PWD}/raw_data:/app/raw_data" -v "${PWD}/graficos:/app/graficos" proyecto-tin
+docker run --rm -v "${PWD}/data_original:/app/data_original:ro" -v "${PWD}/raw_data:/app/raw_data" -v "${PWD}/process_data:/app/process_data" -v "${PWD}/gold_data:/app/gold_data" proyecto-tin
 ```
 
-Los gráficos quedan en `graficos/` y la extracción en `raw_data/`, igual que con `bash run.sh`. Sigue haciendo falta internet para consultar mindicador.cl.
+La ejecución genera los archivos originales de Bronze en raw_data/, los datos depurados de Silver en process_data/ y el modelo dimensional Gold en gold_data/. Cada carga se almacena en una carpeta identificada por su fecha de ejecución.
 
 
 
