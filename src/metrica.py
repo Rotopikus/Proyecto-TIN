@@ -1,4 +1,4 @@
-"""Capa semántica: el nombre, la fórmula y las definiciones de la métrica viven aquí.
+"""Capa semántica: el nombre, la fórmula y las definiciones de la métrica están aquí.
 
 La consumen el prototipo (prototipo/app.py) y las cifras del informe, que se
 imprimen con `python src/metrica.py` al final de run.sh. No recalcula nada que la
@@ -40,7 +40,7 @@ DEFINICIONES = {
         "ops",
         "Ley de Operaciones",
         "libras_finas_ops",
-        "Cada lote se calcula con la ley que reporta Operaciones. Es la definición principal.",
+        "Cada lote se calcula con la ley que reporta Operaciones, que es la definición principal.",
     ),
     "hibrida": Definicion(
         "hibrida",
@@ -53,7 +53,7 @@ DEFINICIONES = {
         "simple",
         "Promedio simple de la ley",
         "libras_finas_simple",
-        "Cada lote se calcula con el promedio aritmético de la ley de Operaciones de su "
+        "Cada lote se calcula con el promedio simple de la ley de Operaciones de su "
         "planta y mes, sin ponderar por tonelaje.",
     ),
 }
@@ -223,7 +223,7 @@ def por_mes(df: pd.DataFrame, dim_mes: pd.DataFrame, definicion: str = PRINCIPAL
 def por_planta(df: pd.DataFrame, definicion: str, mes_inicial: str, mes_final: str) -> pd.DataFrame:
     """Costo por libra de cada planta en el período y en sus dos extremos.
 
-    El sobrecosto es el caso de negocio de la E1: lo que costó producir las libras
+    El sobrecosto es el caso de negocio de la E1, o sea lo que costó producir las libras
     del último mes frente a lo que habrían costado al costo unitario en pesos del
     primer mes de esa misma planta. Va en pesos para no mezclar el tipo de cambio.
     """

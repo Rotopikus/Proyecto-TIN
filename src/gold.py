@@ -45,7 +45,7 @@ lotes["cobre_fino_hib_ton"] = (
 lotes["libras_finas_op"] = lotes["cobre_fino_op_ton"] * 1000 / 0.45359237
 lotes["libras_finas_hib"] = lotes["cobre_fino_hib_ton"] * 1000 / 0.45359237
 
-# Definición promedio simple: cada lote toma la ley media aritmética de Operaciones
+# Definición promedio simple: cada lote toma el promedio simple de la ley de Operaciones
 # de su planta-mes, sin ponderar por tonelaje. Tonelaje y recuperación siguen siendo
 # los del lote, así la diferencia con la principal sale sólo de cómo se promedia la ley.
 lotes["ley_simple"] = lotes.groupby(["planta_id", "mes_str"])["ley_pct"].transform("mean")
