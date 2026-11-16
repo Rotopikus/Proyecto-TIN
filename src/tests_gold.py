@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 from datetime import date, datetime
 from pathlib import Path
+import os
 
 ID_FECHA = date.today().strftime("%Y%m%d")
-RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+RUN_ID = os.environ.get("RUN_ID") or datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 def registrar(pruebas, nombre, descripcion, afectados, detalle):
     pasa = afectados == 0

@@ -61,7 +61,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 session = requests.Session()
-retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
+retries = Retry(total=2, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
 session.mount('https://', HTTPAdapter(max_retries=retries))
 
 
@@ -78,7 +78,7 @@ def descargar_indicador(url, nombre):
     respaldo = Path(f"data_original/respaldo_API/{nombre}.json")
 
     try:
-        resp = session.get(url, headers=headers, timeout=60)
+        resp = session.get(url, headers=headers, timeout=(5,10))
         resp.raise_for_status()
         data = resp.json()
 
