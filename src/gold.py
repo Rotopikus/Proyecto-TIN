@@ -101,9 +101,25 @@ costos_mensual = costos_mensual[costos_mensual["completo"]].drop(columns="comple
 print("Pares planta-mes con costos completos:", len(costos_mensual))
 print(costos_mensual.head())
 
-# Preparar tipo de cambio mensual
-dolar_mensual = dolar.groupby("mes_str")["valor"].mean().reset_index() # Promedio mensual del dólar
-dolar_mensual.rename(columns={"valor": "tipo_cambio"}, inplace=True)
+# Tipo de cambio E2: último dólar observado válido de cada mes
+dolar_valido = dolar.dropna(subset=["fecha", "valor"]).copy()
+dolar_valido = dolar_valido[dolar_valido["valor"] > 0]
+
+dolar_mensual = (
+    dolar_valido
+    .sort_values("fecha")
+    .drop_duplicates(subset="mes_str", keep="last")
+    [["mes_str", "fecha", "valor"]]
+    .rename(columns={"valor": "tipo_cambio"})
+    .reset_index(drop=True)
+)
+
+print("Dólar observado de cierre mensual:")
+print(
+    dolar_mensual[
+        dolar_mensual["mes_str"].isin(["2025-01", "2025-12"])
+    ]
+)
 
 print(dolar_mensual.head())
 
