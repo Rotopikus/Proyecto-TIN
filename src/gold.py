@@ -101,11 +101,20 @@ costos_mensual = costos_mensual[costos_mensual["completo"]].drop(columns="comple
 print("Pares planta-mes con costos completos:", len(costos_mensual))
 print(costos_mensual.head())
 
-# Preparar tipo de cambio mensual
-dolar_mensual = dolar.groupby("mes_str")["valor"].mean().reset_index() # Promedio mensual del dólar
-dolar_mensual.rename(columns={"valor": "tipo_cambio"}, inplace=True)
+# Preparar tipo de cambio mensual: último dólar observado disponible
+dolar_mensual = (
+    dolar.sort_values("fecha", kind="stable")
+    .drop_duplicates(subset="mes_str", keep="last")
+    [["mes_str", "fecha", "valor"]]
+    .rename(columns={
+        "fecha": "fecha_tc",
+        "valor": "tipo_cambio"
+    })
+    .sort_values("mes_str")
+    .reset_index(drop=True)
+)
 
-print(dolar_mensual.head())
+print(dolar_mensual)
 
 # Calcular costo por libra
 df_final = produccion_mensual.merge(costos_mensual, on=["planta_id", "mes_str"], how="inner")
