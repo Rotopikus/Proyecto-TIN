@@ -10,10 +10,10 @@ __pycache__/
 .coverage
 htmlcov/
 .ipynb_checkpoints/
-/data_original/
 /raw_data/
 /graficos
-/processed_data/
+/process_data/
+/gold_data/
 *.parquet
 spark-warehouse/
 metastore_db/
@@ -28,3 +28,10 @@ spark-events/
 .DS_Store
 Thumbs.db
 *.log
+
+# Prototipo
+.venv-prototipo/
+
+# Configuración local de cada desarrollador
+CLAUDE.md
+.claude/

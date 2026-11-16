@@ -40,7 +40,7 @@ case "${1:-}" in
 esac
 if (( $# > 1 )); then usage >&2; fail "Solo se permite un argumento."; fi
 
-for filename in requirements.txt src/extraccion.py src/process.py; do
+for filename in requirements.txt src/bronze.py src/silver.py src/gold.py; do
   [[ -f "$filename" ]] || fail "No existe $filename. Coloca run.sh en la raíz del repositorio."
 done
 
@@ -106,18 +106,31 @@ export PYSPARK_PYTHON="$VENV_PY"
 export PYSPARK_DRIVER_PYTHON="$VENV_PY"
 export SPARK_LOCAL_IP="${SPARK_LOCAL_IP:-127.0.0.1}"
 
-# Los dos scripts existentes construyen sus carpetas con date.today().
+# Identificador de fecha compartido por las tres capas
 RUN_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
-log "Ejecutando extracción (fecha de las carpetas: $RUN_DATE)..."
-"$VENV_PY" -u src/extraccion.py
 
-# Evita una lectura accidental de otra carpeta si el día cambia entre las etapas.
-CURRENT_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
-[[ "$CURRENT_DATE" == "$RUN_DATE" ]] || \
-  fail "La fecha cambió durante la ejecución ($RUN_DATE -> $CURRENT_DATE). Los scripts usan date.today(); vuelve a ejecutar la cadena."
+# Ejecutar Bronze, Silver y Gold en orden
+for capa in bronze silver tests_silver gold; do
 
-log "Ejecutando procesamiento..."
-"$VENV_PY" -u src/process.py
+    # Verificar que no haya cambiado el día entre etapas
+    CURRENT_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
 
-log "Cadena actual ejecutada sin errores en $((SECONDS - START_SECONDS)) segundos."
-printf 'Archivos de extracción: raw_data/<tabla>/%s/\n' "$RUN_DATE"
+    [[ "$CURRENT_DATE" == "$RUN_DATE" ]] || \
+        fail "La fecha cambió durante la ejecución. Vuelve a ejecutar la cadena."
+
+    log "Ejecutando capa ${capa}..."
+    "$VENV_PY" -u "src/${capa}.py"
+
+done
+
+log "ELT completado en $((SECONDS - START_SECONDS)) segundos."
+
+printf 'Bronze: raw_data/\n'
+printf 'Silver: process_data/\n'
+printf 'Gold: gold_data/\n'
+
+# Las cifras del informe salen de la misma capa semántica que lee el prototipo.
+log "Cifras del informe y del prototipo (src/metrica.py)..."
+"$VENV_PY" -u src/metrica.py
+
+printf '\nPrototipo: bash prototipo.sh\n'
