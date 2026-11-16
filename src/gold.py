@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import date
 from pathlib import Path
+from tests_gold import ejecutar_tests_gold
 
 ID_FECHA = date.today().strftime("%Y%m%d") 
 
@@ -175,19 +176,6 @@ dim_mes = dim_mes[[
 print("Meses:", len(dim_mes))
 print(dim_mes)
 
-ruta = Path(f"gold_data/dim_mes/{ID_FECHA}")
-ruta.mkdir(parents=True, exist_ok=True)
-
-dim_mes.to_parquet(ruta / "dim_mes.parquet", index=False)
-
-print("Dimensión mes guardada en:", ruta)
-
-assert len(dim_mes) == 12, "Se esperaban 12 meses"
-assert dim_mes["anio_mes"].is_unique, "Hay meses duplicados"
-assert dim_mes[["tc_clp_usd", "precio_cobre_usd_lb"]].notna().all().all(), \
-    "Existen valores faltantes en dim_mes"
-
-print("Validación dim_mes: OK")
 
 # Construir dimensión planta
 dim_planta = plantas.copy()
@@ -215,16 +203,6 @@ dim_planta.drop(columns=["region_id", "nombre"], inplace=True)
 
 print(dim_planta)
 
-# Verificar que cada planta tenga una clave única
-assert dim_planta["planta_key"].is_unique, "Existen plantas duplicadas"
-
-# Guardar dimensión
-ruta = Path(f"gold_data/dim_planta/{ID_FECHA}")
-ruta.mkdir(parents=True, exist_ok=True)
-
-dim_planta.to_parquet(ruta / "dim_planta.parquet", index=False)
-
-print("Dimensión planta guardada:", len(dim_planta), "plantas")
 
 # Construir tabla de hechos
 
@@ -264,34 +242,29 @@ fact_costo_produccion_mensual = fact_costo_produccion_mensual.drop(
 
 fact_costo_produccion_mensual["apto_kpi"] = True
 
-ruta = Path(f"gold_data/fact_costo_produccion_mensual/{ID_FECHA}")
-ruta.mkdir(parents=True, exist_ok=True)
 
-fact_costo_produccion_mensual.to_parquet(
-    ruta / "fact_costo_produccion_mensual.parquet",
-    index=False
+
+# Validar modelo Gold antes de publicar
+ejecutar_tests_gold(
+    fact_costo_produccion_mensual,
+    dim_planta,
+    dim_mes
 )
 
-print("Tabla de hechos guardada:", len(fact_costo_produccion_mensual), "filas")
+# Guardar las tablas solamente si pasaron los tests
+tablas_gold = {
+    "dim_mes": dim_mes,
+    "dim_planta": dim_planta,
+    "fact_costo_produccion_mensual": fact_costo_produccion_mensual
+}
 
-fact = fact_costo_produccion_mensual
+for nombre, df in tablas_gold.items():
 
-# Grano único: una fila por planta-mes
-assert not fact.duplicated(
-    subset=["planta_key", "mes_key"]
-).any(), "Hay pares planta-mes duplicados"
+    ruta = Path(f"gold_data/{nombre}/{ID_FECHA}")
+    ruta.mkdir(parents=True, exist_ok=True)
 
-# No existen plantas sin dimensión
-assert fact["planta_key"].isin(
-    dim_planta["planta_key"]
-).all(), "Hay plantas huérfanas"
+    df.to_parquet(ruta / f"{nombre}.parquet", index=False )
 
-# No existen meses sin dimensión
-assert fact["mes_key"].isin(
-    dim_mes["mes_key"]
-).all(), "Hay meses huérfanos"
+    print(f"{nombre} guardada correctamente.")
 
-# Producción válida
-assert (fact["libras_finas_ops"] > 0).all(), "Hay producción inválida"
-
-print("Validaciones del modelo dimensional: OK")
+print("Publicación Gold completada.")

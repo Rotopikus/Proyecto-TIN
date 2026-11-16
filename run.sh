@@ -110,7 +110,7 @@ export SPARK_LOCAL_IP="${SPARK_LOCAL_IP:-127.0.0.1}"
 RUN_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"
 
 # Ejecutar Bronze, Silver y Gold en orden
-for capa in bronze silver tests_silver gold tests_gold; do
+for capa in bronze silver tests_silver gold; do
 
     # Verificar que no haya cambiado el día entre etapas
     CURRENT_DATE="$($VENV_PY -c 'from datetime import date; print(date.today().strftime("%Y%m%d"))')"

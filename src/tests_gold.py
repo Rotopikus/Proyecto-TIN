@@ -6,18 +6,6 @@ from pathlib import Path
 ID_FECHA = date.today().strftime("%Y%m%d")
 RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-fact = pd.read_parquet(
-    f"gold_data/fact_costo_produccion_mensual/{ID_FECHA}/fact_costo_produccion_mensual.parquet"
-)
-
-dim_planta = pd.read_parquet(
-    f"gold_data/dim_planta/{ID_FECHA}/dim_planta.parquet"
-)
-
-dim_mes = pd.read_parquet(
-    f"gold_data/dim_mes/{ID_FECHA}/dim_mes.parquet"
-)
-
 def registrar(pruebas, nombre, descripcion, afectados, detalle):
     pasa = afectados == 0
 
@@ -153,30 +141,35 @@ def test_periodo_hechos(fact, dim_mes, pruebas):
         "Sin incidencias" if afectados == 0 else f"{afectados} registros fuera del período"
     )
 
-pruebas = []
 
-resultados = [
-    test_clave_hechos(fact, pruebas),
-    test_integridad_referencial(fact, dim_planta, dim_mes, pruebas),
-    test_rangos_hechos(fact, pruebas),
-    test_periodo_hechos(fact, dim_mes, pruebas)
-]
+def ejecutar_tests_gold(fact, dim_planta, dim_mes):
+    pruebas = []
 
-ruta = Path(f"gold_data/calidad/{ID_FECHA}")
-ruta.mkdir(parents=True, exist_ok=True)
+    resultados = [
+        test_clave_hechos(fact, pruebas),
+        test_integridad_referencial(fact, dim_planta, dim_mes, pruebas),
+        test_rangos_hechos(fact, pruebas),
+        test_periodo_hechos(fact, dim_mes, pruebas)
+    ]
 
-df_pruebas = pd.DataFrame(pruebas)
+    ruta = Path(f"gold_data/calidad/{ID_FECHA}")
+    ruta.mkdir(parents=True, exist_ok=True)
 
-df_pruebas.to_csv(
-    ruta / f"pruebas_{RUN_ID}.csv",
-    index=False
-)
+    df_pruebas = pd.DataFrame(pruebas)
 
-print(df_pruebas.to_string(index=False))
-
-if not all(resultados):
-    raise RuntimeError(
-        "Una o más pruebas Gold fallaron. Revisa el reporte."
+    df_pruebas.to_csv(
+        ruta / f"pruebas_{RUN_ID}.csv",
+        index=False
     )
 
-print("Todas las pruebas Gold pasaron.")
+    print(df_pruebas.to_string(index=False))
+
+    if not all(resultados):
+        raise RuntimeError(
+            "Una o más pruebas Gold fallaron. Revisa el reporte."
+        )
+        return False
+
+    print("Todas las pruebas Gold pasaron.")
+
+    return True 
