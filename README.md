@@ -9,6 +9,7 @@
 
 ```bash
 git clone https://github.com/Rotopikus/Proyecto-TIN.git
+cd Proyecto-TIN
 ```
 
 ### 2. Instalar las dependencias del sistema
@@ -25,9 +26,9 @@ python3 --version
 java -version
 ```
 
-### 3. Preparar los archivos originales
+### 3. Archivos originales
 
-La estructura de entrada esperada es:
+Los archivos originales y los respaldos de la API ya vienen en el repositorio, en `data_original/`; no hay que copiar nada. La estructura del proyecto es:
 
 ```text
 Proyecto-TIN/
@@ -92,7 +93,7 @@ bash run.sh
 
 Funciona igual en Windows, macOS y Linux, sin instalar Java ni Python: sólo hace falta Docker. La imagen reproduce el entorno de arriba (Ubuntu 24.04, OpenJDK 17 y Python 3.12) y ejecuta el mismo `run.sh`.
 
-1. Copiar los datos de minería grupo 3 a `data_original/`, igual que en el paso 3.
+1. Los datos originales ya están en `data_original/` (paso 3).
 2. Desde la raíz del repositorio, construir la imagen y ejecutar la cadena.
 
 macOS o Linux:
@@ -208,6 +209,8 @@ Una pantalla en Streamlit que responde la pregunta del grupo con la última corr
 ```bash
 bash prototipo.sh
 ```
+
+La primera vez Streamlit puede pedir un email en la terminal: basta con presionar Enter. Para evitarlo, se puede abrir con `bash prototipo.sh --server.headless true`.
 
 Queda en <http://localhost:8501>. La primera vez crea `.venv-prototipo/` e instala `prototipo/requirements.txt`. Pide Python 3.10 o superior y no necesita Java. Si todavía no existe `gold_data/`, hay que correr antes la cadena (`bash run.sh` o Docker).
 
