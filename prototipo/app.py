@@ -136,7 +136,7 @@ with f2:
     )
 with f3:
     ley = st.radio(
-        "Ley con que se calcula el cobre fino",
+        "**Ley con que se calcula el cobre fino** · hay tres; al cambiarla cambia toda la pantalla",
         options=corrida.definiciones,
         format_func=lambda clave: m.DEFINICIONES[clave].etiqueta,
         horizontal=True,
@@ -206,7 +206,7 @@ with tab_respuesta:
         st.markdown(
             f"""
             <div class="hero">
-              <div class="hero-etiqueta">{m.NOMBRE}, {etiqueta_periodo}</div>
+              <div class="hero-etiqueta">{m.NOMBRE}, {etiqueta_periodo}, con {m.DEFINICIONES[ley].etiqueta}</div>
               <div class="hero-valor">{m.formato(cifra)} <span>{m.UNIDAD}</span></div>
               <div class="hero-respuesta">{respuesta}</div>
               <div class="hero-nota">Cobertura: {cob['pares']} de {cob['pares_posibles']} pares planta-mes y {lotes_txt}.<br>
@@ -293,7 +293,7 @@ with tab_respuesta:
     st.caption(nota)
 
     # Corte por planta
-    st.subheader(f"Por planta: {inicio['mes']} frente a {fin['mes']}")
+    st.subheader(f"Por planta: costo y sobrecosto referencial, {inicio['mes']} frente a {fin['mes']}")
     por_planta = m.por_planta(df, ley, inicio["anio_mes"], fin["anio_mes"]).sort_values(
         "sobrecosto_clp", ascending=False, na_position="last"
     )
@@ -323,7 +323,7 @@ with tab_respuesta:
             f"{inicio['mes']} (USD/lb)": por_planta["costo_inicial"].map(m.formato),
             f"{fin['mes']} (USD/lb)": por_planta["costo_final"].map(m.formato),
             "Variación": por_planta["variacion"].map(porcentaje),
-            "Sobrecosto (MM CLP)": por_planta["sobrecosto_clp"].map(lambda v: m.formato(v / 1e6, 0)),
+            "Sobrecosto referencial (MM CLP)": por_planta["sobrecosto_clp"].map(lambda v: m.formato(v / 1e6, 0)),
         })
         st.dataframe(tabla_plantas, hide_index=True, width="stretch")
         primera = por_planta.dropna(subset=["sobrecosto_clp"]).head(1)
@@ -331,12 +331,12 @@ with tab_respuesta:
             p = primera.iloc[0]
             total = por_planta["sobrecosto_clp"].sum()
             st.markdown(
-                f"La planta con mayor sobrecosto es {p['planta']}, con {m.formato(p['sobrecosto_clp'] / 1e6, 0)} "
+                f"La planta con mayor sobrecosto referencial es {p['planta']}, con {m.formato(p['sobrecosto_clp'] / 1e6, 0)} "
                 f"millones de pesos en {fin['mes']}, de un total de {m.formato(total / 1e6, 0)} millones "
                 "entre las plantas elegidas."
             )
         st.caption(
-            f"El sobrecosto es lo que costó producir las libras finas de {fin['mes']} frente a lo que habrían "
+            f"El sobrecosto referencial es lo que costó producir las libras finas de {fin['mes']} frente a lo que habrían "
             f"costado al costo por libra en pesos de {inicio['mes']} de la misma planta. Va en pesos para que "
             "el tipo de cambio no lo mueva."
         )
@@ -361,6 +361,8 @@ with tab_respuesta:
 # ---------------------------------------------------------------- pestaña 2
 with tab_leyes:
     st.subheader("La misma cifra con las tres leyes")
+    st.info("Para ver toda la pantalla con otra ley, cámbiala en el selector "
+            "«Ley con que se calcula el cobre fino», arriba a la derecha.", icon=":material/tune:")
     st.markdown(
         "Las tres leyes usan los mismos lotes, los mismos costos y el mismo dólar. Sólo cambia con qué ley "
         "se calcula el cobre fino de cada lote, así que la diferencia entre filas es el efecto de la ley."
